@@ -16,6 +16,8 @@ import logging
 import time
 from datetime import datetime
 
+load_dotenv()
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -53,18 +55,20 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
     
     async def _log_request(self, request: Request, request_id: str):
         headers = dict(request.headers)
-        body = await request.body()
         
         try:
-            body_text = body.decode()
-            if body_text:
+            # Read request body
+            body = await request.body()
+            if body:
                 try:
-                    body_json = json.loads(body_text)
+                    body_json = json.loads(body)
                     body_text = json.dumps(body_json, indent=2)
                 except json.JSONDecodeError:
-                    pass
-        except UnicodeDecodeError:
-            body_text = f"<binary data of length {len(body)}>"
+                    body_text = body.decode()
+            else:
+                body_text = ""
+        except Exception:
+            body_text = "<binary data>"
         
         log_data = {
             "timestamp": datetime.now().isoformat(),
@@ -75,26 +79,29 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
             "body": body_text
         }
         
-        logger.info(f"REQUEST [{request_id}]:\n{json.dumps(log_data, indent=2)}")
+        logger.info(f"SERVER REQUEST [{request_id}]:\n{json.dumps(log_data, indent=2)}")
     
     async def _log_response(self, response: Response, request_id: str, duration: float):
         headers = dict(response.headers)
         
-        # Get response body if it exists
-        body = b""
-        if hasattr(response, "body"):
-            body = response.body
-        
         try:
-            body_text = body.decode()
-            if body_text:
+            # Get response body if it exists
+            if isinstance(response, Response):
+                body = response.body
+            else:
+                # For StreamingResponse and other types, we can't log the body
+                body = b""
+            
+            if body:
                 try:
-                    body_json = json.loads(body_text)
+                    body_json = json.loads(body)
                     body_text = json.dumps(body_json, indent=2)
                 except json.JSONDecodeError:
-                    pass
-        except UnicodeDecodeError:
-            body_text = f"<binary data of length {len(body)}>"
+                    body_text = body.decode()
+            else:
+                body_text = ""
+        except Exception:
+            body_text = "<binary data>"
         
         log_data = {
             "timestamp": datetime.now().isoformat(),
@@ -105,7 +112,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
             "body": body_text
         }
         
-        logger.info(f"RESPONSE [{request_id}]:\n{json.dumps(log_data, indent=2)}")
+        logger.info(f"SERVER RESPONSE [{request_id}]:\n{json.dumps(log_data, indent=2)}")
 
 class LoggingTransport(httpx.AsyncBaseTransport):
     def __init__(self, transport: httpx.AsyncBaseTransport):
@@ -116,7 +123,7 @@ class LoggingTransport(httpx.AsyncBaseTransport):
         request_id = secrets.token_hex(8)
         
         # Log request
-        self._log_request(request, request_id)
+        await self._log_request(request, request_id)
         
         # Get request start time
         start_time = time.time()
@@ -128,15 +135,16 @@ class LoggingTransport(httpx.AsyncBaseTransport):
         duration = time.time() - start_time
         
         # Log response
-        self._log_response(response, request_id, duration)
+        await self._log_response(response, request_id, duration)
         
         return response
     
-    def _log_request(self, request: httpx.Request, request_id: str):
+    async def _log_request(self, request: httpx.Request, request_id: str):
         headers = dict(request.headers)
         
         try:
-            body = request.read()
+            # Create a copy of the request to read the body
+            body = request.content
             if body:
                 try:
                     body_json = json.loads(body)
@@ -159,11 +167,12 @@ class LoggingTransport(httpx.AsyncBaseTransport):
         
         logger.info(f"CLIENT REQUEST [{request_id}]:\n{json.dumps(log_data, indent=2)}")
     
-    def _log_response(self, response: httpx.Response, request_id: str, duration: float):
+    async def _log_response(self, response: httpx.Response, request_id: str, duration: float):
         headers = dict(response.headers)
         
         try:
-            body = response.read()
+            # Read the response content without consuming the stream
+            body = await response.aread()
             if body:
                 try:
                     body_json = json.loads(body)
@@ -172,6 +181,9 @@ class LoggingTransport(httpx.AsyncBaseTransport):
                     body_text = body.decode()
             else:
                 body_text = ""
+            
+            # Create a new response with the same content
+            response._content = body
         except Exception:
             body_text = "<binary data>"
         
@@ -186,8 +198,38 @@ class LoggingTransport(httpx.AsyncBaseTransport):
         
         logger.info(f"CLIENT RESPONSE [{request_id}]:\n{json.dumps(log_data, indent=2)}")
 
-app = FastAPI()
+class LoggingClient(httpx.AsyncClient):
+    """Custom HTTP client that automatically uses logging transport"""
+    def __init__(self, **kwargs):
+        transport = httpx.AsyncHTTPTransport()
+        logging_transport = LoggingTransport(transport)
+        super().__init__(transport=logging_transport, **kwargs)
+
+# Create a single client instance for reuse
+http_client: Optional[LoggingClient] = None
+
+async def get_http_client() -> LoggingClient:
+    """Get or create a logging HTTP client instance"""
+    global http_client
+    if http_client is None:
+        http_client = LoggingClient()
+    return http_client
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for FastAPI application"""
+    # Startup
+    await subscribe_to_topics()
+    yield
+    # Shutdown - cleanup HTTP client
+    global http_client
+    if http_client is not None:
+        await http_client.aclose()
+        http_client = None
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestResponseLoggingMiddleware)
+
 
 # Store subscriptions and secrets in memory (in production, use a proper database)
 subscriptions = {}
@@ -269,36 +311,35 @@ async def subscribe_to_topics():
         
         # Generate callback URL from base URL
         callback_url = urljoin(BASE_URL, CALLBACK_PATH)
-        print(f"Using callback URL: {callback_url}")
-        print(f"Using hub URL: {HUB_URL}")
+        logger.info(f"Using callback URL: {callback_url}")
+        logger.info(f"Using hub URL: {HUB_URL}")
         
-        # Create client with logging transport
-        transport = httpx.AsyncHTTPTransport()
-        logging_transport = LoggingTransport(transport)
-        async with httpx.AsyncClient(transport=logging_transport) as client:
-            for topic_url in config["topics"]:
-                # Prepare subscription request parameters
-                params = {
-                    "hub.mode": "subscribe",
-                    "hub.topic": topic_url,
-                    "hub.callback": callback_url,
-                    "hub.verify": "async"
-                }
-                
-                try:
-                    # Send subscription request to the hub
-                    response = await client.post(HUB_URL, data=params)
-                    if response.status_code in [200, 202]:
-                        print(f"Subscription request sent for {topic_url}")
-                        # Store subscription intent (actual subscription will be confirmed via webhook)
-                        if topic_url not in subscriptions:
-                            subscriptions[topic_url] = set()
-                        subscriptions[topic_url].add(callback_url)
-                    else:
-                        print(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
-                        print(f"Hub response: {response.text}")
-                except Exception as e:
-                    print(f"Error subscribing to {topic_url}: {str(e)}")
+        # Get the logging client
+        client = await get_http_client()
+        
+        for topic_url in config["topics"]:
+            # Prepare subscription request parameters
+            params = {
+                "hub.mode": "subscribe",
+                "hub.topic": topic_url,
+                "hub.callback": callback_url,
+                "hub.verify": "async"
+            }
+            
+            try:
+                # Send subscription request to the hub
+                response = await client.post(HUB_URL, data=params)
+                if response.status_code in [200, 202]:
+                    print(f"Subscription request sent for {topic_url}")
+                    # Store subscription intent (actual subscription will be confirmed via webhook)
+                    if topic_url not in subscriptions:
+                        subscriptions[topic_url] = set()
+                    subscriptions[topic_url].add(callback_url)
+                else:
+                    print(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
+                    print(f"Hub response: {response.text}")
+            except Exception as e:
+                print(f"Error subscribing to {topic_url}: {str(e)}")
     
     except json.JSONDecodeError:
         print("Error: Invalid JSON in topics.json")
