@@ -3,7 +3,8 @@
     {
       "url": "http://medium.superfeedr.com",
       "topics": [
-        "https://medium.com/feed/tag/technology"
+        "https://medium.com/feed/tag/technology",
+        "https://medium.com/feed/tag/science"
       ]
     }
   ]

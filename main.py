@@ -7,12 +7,14 @@ import os
 import traceback
 import xml.etree.ElementTree as ET
 from contextlib import asynccontextmanager
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
 
 import atoma
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException, Header, Query
 from fastapi.responses import PlainTextResponse
@@ -23,7 +25,7 @@ from http_client_logging import get_http_client, cleanup_http_client
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()]
 )
@@ -34,8 +36,7 @@ load_dotenv()
 
 # Get configuration from environment variables
 BASE_URL = os.getenv("WEBSUB_BASE_URL", "http://localhost:8080")
-HUB_URL = os.getenv("WEBSUB_HUB_URL", "http://medium.superfeedr.com")
-CALLBACK_PATH = "/webhook"
+CALLBACK_PATH = "/websub/webhook"
 
 # Store subscriptions and secrets in memory (in production, use a proper database)
 subscriptions = {}
@@ -62,9 +63,22 @@ async def lifespan(app: FastAPI):
     # Startup
     post_count = db.count_posts()
     logger.info(f"Starting server with {post_count} previously seen posts in database")
+    
+    # Start subscription expiry checker
+    expiry_checker = asyncio.create_task(check_expiring_subscriptions())
+    
+    # Subscribe to topics
     await subscribe_to_topics()
+    
     yield
-    # Shutdown - cleanup HTTP client
+    
+    # Shutdown
+    expiry_checker.cancel()
+    try:
+        await expiry_checker
+    except asyncio.CancelledError:
+        pass
+    
     await cleanup_http_client()
 
 
@@ -72,7 +86,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestResponseLoggingMiddleware)
 
 
-@app.get("/websub/webhook")
+@app.get("/websub")
 async def root():
     return {"message": "WebSub Hub is running"}
 
@@ -84,18 +98,146 @@ async def webhook_verification(
     lease_seconds: Optional[int] = Query(None, alias="hub.lease_seconds")
 ):
     """Handle WebSub subscription verification"""
-    if mode == "subscribe" or mode == "unsubscribe":
+    logger.info(f"Received verification request: mode={mode}, topic={topic}, lease_seconds={lease_seconds}")
+    
+    if mode == "subscribe":
+        if topic not in subscriptions:
+            logger.warning(f"Received verification for unknown subscription: {topic}")
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        # Store subscription with lease time in database
+        if lease_seconds:
+            # Find the hub URL from our config
+            with open("topics.json") as f:
+                config = json.load(f)
+                hub_url = next((hub['url'] for hub in config['hubs'] 
+                              if topic in hub['topics']), None)
+            
+            if hub_url:
+                db.add_subscription(topic, hub_url, lease_seconds)
+                logger.info(f"Stored subscription lease for {topic}, expires in {lease_seconds} seconds")
+        
+        # Return the challenge code to confirm subscription
         if challenge:
-            # Return the challenge code as plain text for verification
             return PlainTextResponse(content=challenge)
+    
+    elif mode == "unsubscribe":
+        # Handle unsubscribe verification if needed
+        if challenge:
+            return PlainTextResponse(content=challenge)
+    
     raise HTTPException(status_code=400, detail="Invalid verification request")
 
 
-def extract_topic_from_link(link_header):
+async def check_expiring_subscriptions():
+    """Check for expiring subscriptions and renew them"""
+    while True:
+        try:
+            # Get subscriptions expiring in the next 5 minutes
+            expiring = db.get_expiring_subscriptions(within_minutes=5)
+            if expiring:
+                logger.info(f"Found {len(expiring)} subscription(s) expiring soon")
+                
+                # Get HTTP client
+                client = await get_http_client()
+                
+                # Try to renew each subscription
+                for topic_url, hub_url, callback_url, expires in expiring:
+                    logger.info(f"Renewing subscription for {topic_url} (expires {expires})")
+                    await subscribe_to_topic(client, hub_url, topic_url, callback_url)
+        
+        except Exception as e:
+            logger.error(f"Error checking expiring subscriptions: {str(e)}")
+            if logger.isEnabledFor(logging.DEBUG):
+                traceback.print_exc()
+        
+        # Check every minute
+        await asyncio.sleep(60)
+
+
+async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url: str, callback_url: str, max_retries: int = 10) -> bool:
     """
-    link header example: <https://example.com/feed>; rel="self"
+    Subscribe to a single topic with retry logic
+    Returns True if subscription was successful, False otherwise
     """
-    return link_header.split(";")[0].strip("<>")
+    params = {
+        "hub.mode": "subscribe",
+        "hub.topic": topic_url,
+        "hub.callback": callback_url,
+        "hub.verify": "async"
+    }
+    
+    for attempt in range(max_retries):
+        try:
+            response = await client.post(hub_url, data=params)
+            if response.status_code in [200, 202]:
+                logger.info(f"Subscription request sent for {topic_url}")
+                return True
+            elif response.status_code == 422:
+                logger.warning(f"Received 422 for {topic_url}, attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(1)  # Wait 1 second before retrying
+                    continue
+            else:
+                logger.error(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
+                logger.error(f"Hub response: {response.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Error subscribing to {topic_url}: {str(e)}")
+            if logger.isEnabledFor(logging.DEBUG):
+                traceback.print_exc()
+            return False
+    
+    logger.error(f"Failed to subscribe to {topic_url} after {max_retries} attempts")
+    return False
+
+async def subscribe_to_topics():
+    """Read topics from JSON file and send subscription requests to WebSub hub"""
+    # wait a little so that server finishes startup
+    await asyncio.sleep(1)
+    
+    try:
+        topics_file = Path("topics.json")
+        if not topics_file.exists():
+            logger.error("topics.json not found")
+            return
+        
+        with open(topics_file) as f:
+            config = json.load(f)
+        
+        # Generate callback URL from base URL
+        callback_url = urljoin(BASE_URL, CALLBACK_PATH)
+        logger.info(f"Using callback URL: {callback_url}")
+        
+        # Get the logging client
+        client = await get_http_client()
+        
+        for hub in config["hubs"]:
+            hub_url = hub['url']
+            for topic_url in hub["topics"]:
+                # Check if we already have an active subscription
+                subscription = db.get_subscription(topic_url)
+                if subscription:
+                    topic, hub, expires = subscription
+                    if expires > datetime.now():
+                        logger.info(f"Skipping {topic_url}, subscription active until {expires}")
+                        continue
+                    else:
+                        logger.info(f"Subscription expired for {topic_url}, renewing")
+                
+                # Subscribe to topic
+                if await subscribe_to_topic(client, hub_url, topic_url, callback_url):
+                    # Store subscription intent (actual subscription will be confirmed via webhook)
+                    if topic_url not in subscriptions:
+                        subscriptions[topic_url] = set()
+                    subscriptions[topic_url].add(callback_url)
+    
+    except json.JSONDecodeError:
+        logger.error("Error: Invalid JSON in topics.json")
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        if logger.isEnabledFor(logging.DEBUG):
+            traceback.print_exc()
 
 
 @app.post("/websub/webhook")
@@ -130,7 +272,7 @@ async def webhook_handler(
                 for child in root:
                     child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                     if child_tag == 'id':
-                        if child.text == '':
+                        if child.text is None or child.text.strip() == "":
                             logger.info(f"Received status message for topic {topic}: {child.text}")
                             return {"status": "success", "message": "Status message received"}
             
@@ -155,59 +297,12 @@ async def webhook_handler(
         raise HTTPException(status_code=400, detail="Error processing webhook")
 
 
-async def subscribe_to_topics():
+def extract_topic_from_link(link_header):
+    """
+    link header example: <https://example.com/feed>; rel="self"
+    """
+    return link_header.split(";")[0].strip("<>")
 
-    # wait a little so that server finishes startup
-    await asyncio.sleep(1)
-    """Read topics from JSON file and send subscription requests to WebSub hub"""
-    try:
-        topics_file = Path("topics.json")
-        if not topics_file.exists():
-            print("topics.json not found")
-            return
-        
-        with open(topics_file) as f:
-            config = json.load(f)
-        
-        # Generate callback URL from base URL
-        callback_url = urljoin(BASE_URL, CALLBACK_PATH)
-        logger.info(f"Using callback URL: {callback_url}")
-
-        # Get the logging client
-        client = await get_http_client()
-
-        for hub in config["hubs"]:
-            hub_url = hub['url']
-            for topic_url in hub["topics"]:
-                # Prepare subscription request parameters
-                params = {
-                    "hub.mode": "subscribe",
-                    "hub.topic": topic_url,
-                    "hub.callback": callback_url,
-                    "hub.verify": "async"
-                }
-
-                try:
-                    # Send subscription request to the hub
-                    response = await client.post(hub_url, data=params)
-                    if response.status_code in [200, 202, 204]:
-                        print(f"Subscription request sent for {topic_url}")
-                        # Store subscription intent (actual subscription will be confirmed via webhook)
-                        if topic_url not in subscriptions:
-                            subscriptions[topic_url] = set()
-                        subscriptions[topic_url].add(callback_url)
-                    else:
-                        print(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
-                        print(f"Hub response: {response.text}")
-                except Exception as e:
-                    print(f"Error subscribing to {topic_url}: {str(e)}")
-    
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON in topics.json")
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        if logger.isEnabledFor(logging.DEBUG):
-            traceback.print_exc()
 
 if __name__ == "__main__":
     import uvicorn
