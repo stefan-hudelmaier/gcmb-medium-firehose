@@ -11,3 +11,10 @@ wheels/
 
 # Environment variables
 .env
+
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.idea/medium.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/.gitignore
