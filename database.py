@@ -68,3 +68,14 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting post {post_id}: {str(e)}")
             return None
+
+    def count_posts(self) -> int:
+        """Get the total number of posts in the database"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM posts")
+                return cursor.fetchone()[0]
+        except Exception as e:
+            logger.error(f"Error counting posts: {str(e)}")
+            return 0

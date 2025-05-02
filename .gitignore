@@ -18,3 +18,5 @@ wheels/
 .idea/medium.iml
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/.gitignore
+.idea/dataSources.xml
+posts.db

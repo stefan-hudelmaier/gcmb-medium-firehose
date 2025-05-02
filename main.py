@@ -1,21 +1,25 @@
-from fastapi import FastAPI, Request, Response, HTTPException, Header, status, Query
-from fastapi.responses import PlainTextResponse
+import asyncio
 import hashlib
 import hmac
 import json
-from typing import Optional
-import secrets
-from pathlib import Path
-import os
-from urllib.parse import urljoin
-from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 import logging
-import time
-from datetime import datetime
+import os
+import traceback
+import xml.etree.ElementTree as ET
+from contextlib import asynccontextmanager
+from io import BytesIO
+from pathlib import Path
+from typing import Optional
+from urllib.parse import urljoin
+
+import atoma
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request, HTTPException, Header, Query
+from fastapi.responses import PlainTextResponse
+
 from database import Database
-from http_client_logging import get_http_client, cleanup_http_client
 from fastapi_logging import RequestResponseLoggingMiddleware
+from http_client_logging import get_http_client, cleanup_http_client
 
 # Configure logging
 logging.basicConfig(
@@ -32,18 +36,6 @@ load_dotenv()
 BASE_URL = os.getenv("WEBSUB_BASE_URL", "http://localhost:8080")
 HUB_URL = os.getenv("WEBSUB_HUB_URL", "http://medium.superfeedr.com")
 CALLBACK_PATH = "/webhook"
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager for FastAPI application"""
-    # Startup
-    await subscribe_to_topics()
-    yield
-    # Shutdown - cleanup HTTP client
-    await cleanup_http_client()
-
-app = FastAPI(lifespan=lifespan)
-app.add_middleware(RequestResponseLoggingMiddleware)
 
 # Store subscriptions and secrets in memory (in production, use a proper database)
 subscriptions = {}
@@ -63,11 +55,28 @@ def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     
     return hmac.compare_digest(signature, expected_signature)
 
-@app.get("/webhook")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for FastAPI application"""
+    # Startup
+    post_count = db.count_posts()
+    logger.info(f"Starting server with {post_count} previously seen posts in database")
+    await subscribe_to_topics()
+    yield
+    # Shutdown - cleanup HTTP client
+    await cleanup_http_client()
+
+
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(RequestResponseLoggingMiddleware)
+
+
+@app.get("/websub/webhook")
 async def root():
     return {"message": "WebSub Hub is running"}
 
-@app.get("/webhook")
+@app.get("/websub/webhook")
 async def webhook_verification(
     mode: str = Query(..., alias="hub.mode"),
     topic: str = Query(..., alias="hub.topic"),
@@ -89,7 +98,7 @@ def extract_topic_from_link(link_header):
     return link_header.split(";")[0].strip("<>")
 
 
-@app.post("/webhook")
+@app.post("/websub/webhook")
 async def webhook_handler(
     request: Request,
     x_hub_signature: Optional[str] = Header(None),
@@ -106,27 +115,44 @@ async def webhook_handler(
             raise HTTPException(status_code=403, detail="Invalid signature")
     
     try:
-        feed = atoma.parse_atom_bytes(body)
-        for entry in feed.entries:
-            logger.info(f"Received entry: {entry.id_} {entry.title}")
-            # Store post ID in database
-            if db.add_post(entry.id_):
-                logger.info(f"New post added: {entry.id_}")
-            else:
-                logger.debug(f"Post already exists: {entry.id_}")
+        # First check if this is a status message using ElementTree
+        try:
+            tree = ET.parse(BytesIO(body))
+            root = tree.getroot()
+            
+            # Remove namespace from tag names for easier checking
+            # This handles cases where the feed might use namespaces like {http://www.w3.org/2005/Atom}feed
+            ns = root.tag.split('}')[0] + '}' if '}' in root.tag else ''
+            root_tag = root.tag.split('}')[-1]
+            
+            if root_tag == 'feed':
+                # Check for an empty id element, this indicates a status message without entries
+                for child in root:
+                    child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    if child_tag == 'id':
+                        if child.text == '':
+                            logger.info(f"Received status message for topic {topic}: {child.text}")
+                            return {"status": "success", "message": "Status message received"}
+            
+            # If we get here, it's not a status message, parse with atoma
+            feed = atoma.parse_atom_bytes(body)
+            for entry in feed.entries:
+                logger.info(f"Received entry: {entry.id_} {entry.title}")
+                # Store post ID in database
+                if db.add_post(entry.id_):
+                    logger.info(f"New post added: {entry.id_}")
+                else:
+                    logger.info(f"Post already exists: {entry.id_}")
         
-        # Distribute content to all subscribers for this topic
-        if topic in subscriptions:
-            # In a production environment, this should be done asynchronously
-            # and with proper error handling for each subscriber
-            for callback_url in subscriptions[topic]:
-                # Here you would make an HTTP POST request to each subscriber
-                # This is a placeholder for the actual distribution logic
-                print(f"Distributing to {callback_url}: {feed}")
-        
-        return {"status": "success", "message": "Content distributed", "subscriber_count": len(subscriptions.get(topic, []))}
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+            return {"status": "success", "message": "Content distributed"}
+            
+        except ET.ParseError:
+            logger.error("Failed to parse XML")
+            raise HTTPException(status_code=400, detail="Invalid XML")
+            
+    except Exception as e:
+        logger.error(f"Error processing webhook: {str(e)}")
+        raise HTTPException(status_code=400, detail="Error processing webhook")
 
 
 async def subscribe_to_topics():
@@ -146,8 +172,7 @@ async def subscribe_to_topics():
         # Generate callback URL from base URL
         callback_url = urljoin(BASE_URL, CALLBACK_PATH)
         logger.info(f"Using callback URL: {callback_url}")
-        logger.info(f"Using hub URL: {HUB_URL}")
-        
+
         # Get the logging client
         client = await get_http_client()
 
@@ -179,8 +204,10 @@ async def subscribe_to_topics():
     
     except json.JSONDecodeError:
         print("Error: Invalid JSON in topics.json")
-    #except Exception as e:
-    #    print(f"Error: {str(e)}")
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        if logger.isEnabledFor(logging.DEBUG):
+            traceback.print_exc()
 
 if __name__ == "__main__":
     import uvicorn

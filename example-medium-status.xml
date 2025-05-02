@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <status feed="https://medium.com/feed/tag/technology" xmlns="http://superfeedr.com/xmpp-pubsub-ext">
+        <http code="429">Fetched (ping) 429 432000</http>
+        <next_fetch>1970-01-21T05:12:33.774Z</next_fetch>
+        <entries_count_since_last_maintenance>96</entries_count_since_last_maintenance>
+        <velocity>92.4</velocity>
+        <popularity>2.7784345650938547</popularity>
+        <period>432000</period>
+        <last_fetch>1970-01-21T05:02:51.051Z</last_fetch>
+        <last_parse>1970-01-21T05:02:49.988Z</last_parse>
+        <last_maintenance_at>1970-01-21T05:02:04.704Z</last_maintenance_at>
+    </status>
+    <title></title>
+    <updated></updated>
+    <id></id>
+</feed>
