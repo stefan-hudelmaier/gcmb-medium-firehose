@@ -1,9 +1,14 @@
-import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import DictCursor
 from contextlib import contextmanager
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, List
 from dataclasses import dataclass
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +26,33 @@ class Subscription:
         return cls(
             topic_url=row[0],
             hub_url=row[1],
-            subscribed_at=datetime.fromisoformat(row[2]),
-            lease_expires=datetime.fromisoformat(row[3])
+            subscribed_at=row[2],
+            lease_expires=row[3]
         )
 
 class Database:
-    def __init__(self, db_path: str = "state.db"):
-        self.db_path = db_path
+    def __init__(self):
+        self.db_params = {
+            'dbname': os.getenv('POSTGRES_DB', 'medium'),
+            'user': os.getenv('POSTGRES_USER'),
+            'password': os.getenv('POSTGRES_PASSWORD'),
+            'host': os.getenv('POSTGRES_HOST'),
+            'port': os.getenv('POSTGRES_PORT', '5432')
+        }
         self._init_db()
+    
+    @contextmanager
+    def _get_connection(self):
+        """Get a database connection"""
+        conn = psycopg2.connect(**self.db_params)
+        try:
+            yield conn
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
     
     def _init_db(self):
         """Initialize the database with required tables"""
@@ -59,16 +83,6 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_subscriptions_lease 
                 ON subscriptions(lease_expires)
             """)
-            conn.commit()
-    
-    @contextmanager
-    def _get_connection(self):
-        """Context manager for database connections"""
-        conn = sqlite3.connect(self.db_path)
-        try:
-            yield conn
-        finally:
-            conn.close()
     
     def add_post(self, post_id: str) -> bool:
         """
@@ -79,10 +93,9 @@ class Database:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "INSERT OR IGNORE INTO posts (id, timestamp) VALUES (?, ?)",
+                    "INSERT INTO posts (id, timestamp) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING",
                     (post_id, datetime.now().isoformat())
                 )
-                conn.commit()
                 return cursor.rowcount > 0
         except Exception as e:
             logger.error(f"Error adding post {post_id}: {str(e)}")
@@ -94,7 +107,7 @@ class Database:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT id, timestamp FROM posts WHERE id = ?",
+                    "SELECT id, timestamp FROM posts WHERE id = %s",
                     (post_id,)
                 )
                 return cursor.fetchone()
@@ -121,9 +134,13 @@ class Database:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT OR REPLACE INTO subscriptions 
+                    INSERT INTO subscriptions 
                     (topic_url, hub_url, subscribed_at, lease_expires) 
-                    VALUES (?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (topic_url) DO UPDATE SET
+                        hub_url = EXCLUDED.hub_url,
+                        subscribed_at = EXCLUDED.subscribed_at,
+                        lease_expires = EXCLUDED.lease_expires
                 """, (topic_url, hub_url, now.isoformat(), expires.isoformat()))
                 return True
         except Exception as e:
@@ -138,7 +155,7 @@ class Database:
                 cursor.execute("""
                     SELECT topic_url, hub_url, subscribed_at, lease_expires 
                     FROM subscriptions 
-                    WHERE topic_url = ?
+                    WHERE topic_url = %s
                 """, (topic_url,))
                 row = cursor.fetchone()
                 if row:
@@ -157,7 +174,7 @@ class Database:
                 cursor.execute("""
                     SELECT topic_url, hub_url, subscribed_at, lease_expires 
                     FROM subscriptions 
-                    WHERE lease_expires <= ?
+                    WHERE lease_expires <= %s
                 """, (expiry_threshold.isoformat(),))
                 return [Subscription.from_row(row) for row in cursor.fetchall()]
         except Exception as e:
