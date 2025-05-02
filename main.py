@@ -86,11 +86,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestResponseLoggingMiddleware)
 
 
-@app.get("/websub")
-async def root():
-    return {"message": "WebSub Hub is running"}
-
-@app.get("/websub/webhook")
+@app.get(CALLBACK_PATH)
 async def webhook_verification(
     mode: str = Query(..., alias="hub.mode"),
     topic: str = Query(..., alias="hub.topic"),
@@ -239,7 +235,7 @@ async def subscribe_to_topics():
             traceback.print_exc()
 
 
-@app.post("/websub/webhook")
+@app.post(CALLBACK_PATH)
 async def webhook_handler(
     request: Request,
     x_hub_signature: Optional[str] = Header(None),
