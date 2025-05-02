@@ -67,8 +67,8 @@ async def lifespan(app: FastAPI):
     # Start subscription expiry checker
     expiry_checker = asyncio.create_task(check_expiring_subscriptions())
     
-    # Subscribe to topics
-    await subscribe_to_topics()
+    # Subscribe to topics asynchronously so that the server can finish starting and is available
+    asyncio.create_task(subscribe_to_topics())
     
     yield
     
@@ -98,24 +98,24 @@ async def webhook_verification(
     lease_seconds: Optional[int] = Query(None, alias="hub.lease_seconds")
 ):
     """Handle WebSub subscription verification"""
-    logger.info(f"Received verification request: mode={mode}, topic={topic}, lease_seconds={lease_seconds}")
+    logger.info(f"Received verification request: mode={mode}, topic={topic}")
     
     if mode == "subscribe":
         if topic not in subscriptions:
             logger.warning(f"Received verification for unknown subscription: {topic}")
             raise HTTPException(status_code=404, detail="Subscription not found")
-        
-        # Store subscription with lease time in database
-        if lease_seconds:
-            # Find the hub URL from our config
-            with open("topics.json") as f:
-                config = json.load(f)
-                hub_url = next((hub['url'] for hub in config['hubs'] 
-                              if topic in hub['topics']), None)
-            
-            if hub_url:
-                db.add_subscription(topic, hub_url, lease_seconds)
-                logger.info(f"Stored subscription lease for {topic}, expires in {lease_seconds} seconds")
+
+        lease_seconds = int(lease_seconds) if lease_seconds else 24 * 60 * 60  # Default to 24 hours
+
+        # Find the hub URL from our config
+        with open("topics.json") as f:
+            config = json.load(f)
+            hub_url = next((hub['url'] for hub in config['hubs']
+                          if topic in hub['topics']), None)
+
+        if hub_url:
+            db.add_subscription(topic, hub_url, lease_seconds)
+            logger.info(f"Stored subscription lease for {topic}, expires in {lease_seconds} seconds")
         
         # Return the challenge code to confirm subscription
         if challenge:
@@ -142,9 +142,9 @@ async def check_expiring_subscriptions():
                 client = await get_http_client()
                 
                 # Try to renew each subscription
-                for topic_url, hub_url, callback_url, expires in expiring:
-                    logger.info(f"Renewing subscription for {topic_url} (expires {expires})")
-                    await subscribe_to_topic(client, hub_url, topic_url, callback_url)
+                for sub in expiring:
+                    logger.info(f"Renewing subscription for {sub.topic_url} (expires {sub.lease_expires})")
+                    await subscribe_to_topic(client, sub.hub_url, sub.topic_url)
         
         except Exception as e:
             logger.error(f"Error checking expiring subscriptions: {str(e)}")
@@ -155,7 +155,7 @@ async def check_expiring_subscriptions():
         await asyncio.sleep(60)
 
 
-async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url: str, callback_url: str, max_retries: int = 10) -> bool:
+async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url: str, max_retries: int = 20) -> bool:
     """
     Subscribe to a single topic with retry logic
     Returns True if subscription was successful, False otherwise
@@ -163,7 +163,7 @@ async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url:
     params = {
         "hub.mode": "subscribe",
         "hub.topic": topic_url,
-        "hub.callback": callback_url,
+        "hub.callback": urljoin(BASE_URL, CALLBACK_PATH),
         "hub.verify": "async"
     }
     
@@ -218,15 +218,14 @@ async def subscribe_to_topics():
                 # Check if we already have an active subscription
                 subscription = db.get_subscription(topic_url)
                 if subscription:
-                    topic, hub, expires = subscription
-                    if expires > datetime.now():
-                        logger.info(f"Skipping {topic_url}, subscription active until {expires}")
+                    if subscription.lease_expires > datetime.now():
+                        logger.info(f"Skipping {topic_url}, subscription active until {subscription.lease_expires}")
                         continue
                     else:
                         logger.info(f"Subscription expired for {topic_url}, renewing")
                 
                 # Subscribe to topic
-                if await subscribe_to_topic(client, hub_url, topic_url, callback_url):
+                if await subscribe_to_topic(client, hub_url, topic_url):
                     # Store subscription intent (actual subscription will be confirmed via webhook)
                     if topic_url not in subscriptions:
                         subscriptions[topic_url] = set()

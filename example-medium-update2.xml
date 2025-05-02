@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <status feed="https://medium.com/feed/tag/technology" xmlns="http://superfeedr.com/xmpp-pubsub-ext">
+        <http code="200">Fetched (ping) 200 172800 and parsed 1/9 entries</http>
+        <next_fetch>1970-01-21T05:06:45.211Z</next_fetch>
+        <entries_count_since_last_maintenance>129</entries_count_since_last_maintenance>
+        <velocity>476</velocity>
+        <popularity>2.732975747430015</popularity>
+        <generated_ids>true</generated_ids>
+        <title>Technology on Medium</title>
+        <period>172800</period>
+        <last_fetch>1970-01-21T05:03:02.321Z</last_fetch>
+        <last_parse>1970-01-21T05:03:02.321Z</last_parse>
+        <last_maintenance_at>1970-01-21T05:02:34.655Z</last_maintenance_at>
+    </status>
+    <link rel="humans" href="https://medium.com/humans.txt"/>
+    <link title="Technology on Medium" rel="alternate"
+          href="https://medium.com/tag/technology/latest?source=rss------technology-5" type="text/html"/>
+    <link title="Technology on Medium" rel="image"
+          href="https://cdn-images-1.medium.com/proxy/1*TGH72Nnw24QL3iV9IOm4VA.png" type="image/png"/>
+    <link title="Technology on Medium" rel="self" href="https://medium.com/feed/tag/technology"
+          type="application/rss+xml"/>
+    <link title="" rel="hub" href="http://medium.superfeedr.com" type="text/html"/>
+    <title>Technology on Medium</title>
+    <updated>2025-05-02T10:39:02.000Z</updated>
+    <id>technology-on-medium-2025-5-2-10</id>
+    <entry xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+           xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>https://medium.com/p/6507f0418290</id>
+        <published>2025-05-02T10:39:01.000Z</published>
+        <updated>2025-05-02T10:39:01.372Z</updated>
+        <title>The Silent Config Bug Breaking Your Kubernetes Deployments and Costing You $100+ per Hour</title>
+        <summary type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://usersk7.medium.com/the-silent-config-bug-breaking-your-kubernetes-deployments-and-costing-you-100-per-hour-6507f0418290?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1920/1*3b-ZwyNKy5h3afZVXOaAig.png" width="1920"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;&amp;#x201C;I updated the&amp;#xA0;.env file&amp;#x200A;&amp;#x2014;&amp;#x200A;why
+            didn&amp;#x2019;t the change take effect after deployment?&amp;#x201D;&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://usersk7.medium.com/the-silent-config-bug-breaking-your-kubernetes-deployments-and-costing-you-100-per-hour-6507f0418290?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link title="The Silent Config Bug Breaking Your Kubernetes Deployments and Costing You $100+ per Hour"
+              rel="alternate"
+              href="https://usersk7.medium.com/the-silent-config-bug-breaking-your-kubernetes-deployments-and-costing-you-100-per-hour-6507f0418290?source=rss------technology-5"
+              type="text/html"/>
+        <author>
+            <name>Shubham Kumbhar</name>
+            <uri></uri>
+            <email></email>
+            <id>Shubham Kumbhar</id>
+        </author>
+        <category term="helm"/>
+        <category term="docker"/>
+        <category term="devops"/>
+        <category term="kubernetes"/>
+        <category term="technology"/>
+    </entry>
+</feed>
