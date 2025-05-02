@@ -1,5 +1,10 @@
 {
-    "topics": [
-        "https://sevensisterslove.com/feed/"
-    ]
+  "hubs": [
+    {
+      "url": "http://medium.superfeedr.com",
+      "topics": [
+        "https://medium.com/feed/tag/technology"
+      ]
+    }
+  ]
 }

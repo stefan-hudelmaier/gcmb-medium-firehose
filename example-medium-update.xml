@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <status
+            feed="https://medium.com/feed/tag/technology" xmlns="http://superfeedr.com/xmpp-pubsub-ext">
+        <http
+                code="200">Fetched (ping) 200 172800 and parsed 10/10 entries
+        </http>
+        <next_fetch>1970-01-21T05:06:27.691Z
+        </next_fetch>
+        <entries_count_since_last_maintenance>88</entries_count_since_last_maintenance>
+        <velocity>476
+        </velocity>
+        <popularity>2.732975747430015</popularity>
+        <generated_ids>true</generated_ids>
+        <title>Technology on Medium
+        </title>
+        <period>172800</period>
+        <last_fetch>1970-01-21T05:02:46.750Z</last_fetch>
+        <last_parse>1970-01-21T05:02:46.750Z
+        </last_parse>
+        <last_maintenance_at>1970-01-21T05:02:34.655Z</last_maintenance_at>
+    </status>
+    <link
+            rel="humans" href="https://medium.com/humans.txt"/>
+    <link
+            title="Technology on Medium" rel="alternate"
+            href="https://medium.com/tag/technology/latest?source=rss------technology-5" type="text/html"/>
+    <link
+            title="Technology on Medium" rel="image"
+            href="https://cdn-images-1.medium.com/proxy/1*TGH72Nnw24QL3iV9IOm4VA.png" type="image/png"/>
+    <link
+            title="Technology on Medium" rel="self" href="https://medium.com/feed/tag/technology"
+            type="application/rss+xml"/>
+    <link
+            title="" rel="hub" href="http://medium.superfeedr.com" type="text/html"/>
+    <title>Technology on Medium
+    </title>
+    <updated>2025-05-02T06:19:31.000Z</updated>
+    <id>technology-on-medium-2025-5-2-6</id>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/aa65308c5560
+        </id>
+        <published>2025-05-02T06:17:55.000Z</published>
+        <updated>2025-05-02T06:17:56.731Z</updated>
+        <title>Akhuwat loan
+            company head office helpline 2025 03453223408
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://medium.com/@janibabarbabar0/akhuwat-loan-company-head-office-helpline-2025-03453223408-aa65308c5560?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1280/1*zALGx_jzrbZjjatI9CiOFg.jpeg" width="1280"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@janibabarbabar0/akhuwat-loan-company-head-office-helpline-2025-03453223408-aa65308c5560?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="Akhuwat loan company head office helpline 2025 03453223408" rel="alternate"
+                href="https://medium.com/@janibabarbabar0/akhuwat-loan-company-head-office-helpline-2025-03453223408-aa65308c5560?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Akhuwat Loan Company head Office Helpline 2025</name>
+            <uri></uri>
+            <email></email>
+            <id>Akhuwat Loan Company head Office Helpline 2025</id>
+        </author>
+        <category term="writing"/>
+        <category term="relationships"/>
+        <category term="machine-learning"/>
+        <category
+                term="technology"/>
+        <category term="mental-health"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/2ac8489dc65c
+        </id>
+        <published>2025-05-02T06:13:21.000Z</published>
+        <updated>2025-05-02T06:13:21.816Z</updated>
+        <title>Tech-First Homes:
+            How Technology is Redefining Real Estate in 2025
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://medium.com/@Jawad-Real-Estate-Investing/tech-first-homes-2025-2ac8489dc65c?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1280/1*rTRSDm3l3-vFeKb6oHEocg.jpeg" width="1280"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;From automation to predictive maintenance&amp;#x200A;&amp;#x2014;&amp;#x200A;why
+            the smartest investments today are wired for tomorrow.&lt;/p&gt;&lt;p class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@Jawad-Real-Estate-Investing/tech-first-homes-2025-2ac8489dc65c?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="Tech-First Homes: How Technology is Redefining Real Estate in 2025" rel="alternate"
+                href="https://medium.com/@Jawad-Real-Estate-Investing/tech-first-homes-2025-2ac8489dc65c?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Jawad</name>
+            <uri></uri>
+            <email></email>
+            <id>Jawad</id>
+        </author>
+        <category term="smart-home"/>
+        <category term="real-estate"/>
+        <category term="investing"/>
+        <category
+                term="technology"/>
+        <category term="future"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/860e1fc5f571
+        </id>
+        <published>2025-05-02T06:09:33.000Z</published>
+        <updated>2025-05-02T06:09:33.591Z</updated>
+        <title>Waves Summit 2025:
+            The Ultimate Guide to Innovation, Networking, and Industry Transformation
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@technologiesinternet/waves-summit-2025-the-ultimate-guide-to-innovation-networking-and-industry-transformation-860e1fc5f571?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="Waves Summit 2025: The Ultimate Guide to Innovation, Networking, and Industry Transformation"
+                rel="alternate"
+                href="https://medium.com/@technologiesinternet/waves-summit-2025-the-ultimate-guide-to-innovation-networking-and-industry-transformation-860e1fc5f571?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Technology Internet</name>
+            <uri></uri>
+            <email></email>
+            <id>Technology Internet</id>
+        </author>
+        <category term="artificial-intelligence"/>
+        <category term="creativity"/>
+        <category
+                term="writing"/>
+        <category term="medium"/>
+        <category term="technology"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/de9e3f3ab147
+        </id>
+        <published>2025-05-02T06:05:57.000Z</published>
+        <updated>2025-05-02T06:05:57.045Z</updated>
+        <title>We sell out every
+            month, but we\u2019re still not profitable.
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://medium.com/@olokedeomotayo/we-sell-out-every-month-but-were-still-not-profitable-de9e3f3ab147?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/625/1*_i6EbSHXfgWuEm266BYJpw.jpeg" width="625"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;We sell out every month but we are not making profit &lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@olokedeomotayo/we-sell-out-every-month-but-were-still-not-profitable-de9e3f3ab147?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="We sell out every month, but we\u2019re still not profitable." rel="alternate"
+                href="https://medium.com/@olokedeomotayo/we-sell-out-every-month-but-were-still-not-profitable-de9e3f3ab147?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Omotayo Michael Olokede</name>
+            <uri></uri>
+            <email></email>
+            <id>Omotayo Michael Olokede</id>
+        </author>
+        <category term="medium"/>
+        <category term="money"/>
+        <category term="food"/>
+        <category
+                term="mindfulness"/>
+        <category term="technology"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/da4082391eb4
+        </id>
+        <published>2025-05-02T06:02:35.000Z</published>
+        <updated>2025-05-02T06:04:50.478Z</updated>
+        <title>NVIDIA, AS vs
+            China: Masa Depan Chip Dunia\u00a0?
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://medium.com/@galngpangestu/nvidia-as-vs-china-masa-depan-chip-dunia-da4082391eb4?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1440/1*MFie0H8g_X-3NHRrpY4QxA.jpeg" width="1440"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;Pasar Global Mulai Berpikir: Gak Mau Bergantung Lagi?&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@galngpangestu/nvidia-as-vs-china-masa-depan-chip-dunia-da4082391eb4?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="NVIDIA, AS vs China: Masa Depan Chip Dunia\u00a0?" rel="alternate"
+                href="https://medium.com/@galngpangestu/nvidia-as-vs-china-masa-depan-chip-dunia-da4082391eb4?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Galang Pangestu</name>
+            <uri></uri>
+            <email></email>
+            <id>Galang Pangestu</id>
+        </author>
+        <category term="chips"/>
+        <category term="technology"/>
+        <category term="ai"/>
+        <category
+                term="a\u0131"/>
+        <category term="nvidia"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/8850750bdcd4
+        </id>
+        <published>2025-05-02T06:02:24.000Z</published>
+        <updated>2025-05-02T06:02:24.499Z</updated>
+        <title>10 Smart
+            AI-Powered Hacks for Medical Experts to Manage Side Gigs + Automate Tasks and Save 20\u2026
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://theaihustlelab.medium.com/10-smart-ai-powered-hacks-for-medical-experts-to-manage-side-gigs-automate-tasks-and-save-20-8850750bdcd4?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1536/1*Nw1d6637crMyozPRte5ULA.png" width="1536"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;By The AI Hustle Lab &amp;#xB7; AI Enhanced Post&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://theaihustlelab.medium.com/10-smart-ai-powered-hacks-for-medical-experts-to-manage-side-gigs-automate-tasks-and-save-20-8850750bdcd4?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="10 Smart AI-Powered Hacks for Medical Experts to Manage Side Gigs + Automate Tasks and Save 20\u2026"
+                rel="alternate"
+                href="https://theaihustlelab.medium.com/10-smart-ai-powered-hacks-for-medical-experts-to-manage-side-gigs-automate-tasks-and-save-20-8850750bdcd4?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>The AI Hustle Lab</name>
+            <uri></uri>
+            <email></email>
+            <id>The AI Hustle Lab</id>
+        </author>
+        <category term="business"/>
+        <category term="productivity"/>
+        <category term="technology"/>
+        <category
+                term="artificial-intelligence"/>
+        <category term="marketing"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/26bdcca8c014
+        </id>
+        <published>2025-05-02T05:53:16.000Z</published>
+        <updated>2025-05-02T05:54:32.530Z</updated>
+        <title>Why Developer
+            Experience Portals Are the New Nerve Centers of the GenAI Age
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://medium.com/@OpenTurf/why-developer-experience-portals-are-the-new-nerve-centers-of-the-genai-age-26bdcca8c014?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/1400/0*n23wkzNjTpJxGqqO" width="1400"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;In the current era of GenAI, software development has evolved beyond mere
+            coding. It now encompasses integrating tools, knowledge, and the&amp;#x2026;&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@OpenTurf/why-developer-experience-portals-are-the-new-nerve-centers-of-the-genai-age-26bdcca8c014?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="Why Developer Experience Portals Are the New Nerve Centers of the GenAI Age" rel="alternate"
+                href="https://medium.com/@OpenTurf/why-developer-experience-portals-are-the-new-nerve-centers-of-the-genai-age-26bdcca8c014?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>OpenTurf Technologies</name>
+            <uri></uri>
+            <email></email>
+            <id>OpenTurf Technologies</id>
+        </author>
+        <category term="coding"/>
+        <category term="gen-ai-services"/>
+        <category term="technology"/>
+        <category
+                term="developer-portal"/>
+        <category term="ai-tools-for-business"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/1a826dc802c8
+        </id>
+        <published>2025-05-02T05:47:39.000Z</published>
+        <updated>2025-05-02T05:47:39.614Z</updated>
+        <title>Top 5 Common
+            Cybersecurity Threats
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-image"&gt;&lt;a
+            href="https://ozwizard.medium.com/top-5-common-cybersecurity-threats-1a826dc802c8?source=rss------technology-5"&gt;&lt;img
+            src="https://cdn-images-1.medium.com/max/985/1*6wrS-ecBKUQL4lSxRvIT5w.png" width="985"&gt;&lt;/a&gt;&lt;/p&gt;&lt;p
+            class="medium-feed-snippet"&gt;As digital infrastructures grow more complex, the number of cybersecurity
+            threats has surged dramatically. Today, the digital storage of&amp;#x2026;&lt;/p&gt;&lt;p
+            class="medium-feed-link"&gt;&lt;a
+            href="https://ozwizard.medium.com/top-5-common-cybersecurity-threats-1a826dc802c8?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="Top 5 Common Cybersecurity Threats" rel="alternate"
+                href="https://ozwizard.medium.com/top-5-common-cybersecurity-threats-1a826dc802c8?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Oz</name>
+            <uri></uri>
+            <email></email>
+            <id>Oz</id>
+        </author>
+        <category term="information-security"/>
+        <category term="cybersecurity"/>
+        <category
+                term="protection"/>
+        <category term="cyber-awareness"/>
+        <category term="technology"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/babf32f6fdc4
+        </id>
+        <published>2025-05-02T05:40:39.000Z</published>
+        <updated>2025-05-02T05:40:39.274Z</updated>
+        <title>\u201cIntegrasi
+            Teknologi Informasi dalam Kurikulum Pendidikan Dakwah: Mempersiapkan Dai Masa Depan\u201d\u2026
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@ii1581556/integrasi-teknologi-informasi-dalam-kurikulum-pendidikan-dakwah-mempersiapkan-dai-masa-depan-babf32f6fdc4?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="\u201cIntegrasi Teknologi Informasi dalam Kurikulum Pendidikan Dakwah: Mempersiapkan Dai Masa Depan\u201d\u2026"
+                rel="alternate"
+                href="https://medium.com/@ii1581556/integrasi-teknologi-informasi-dalam-kurikulum-pendidikan-dakwah-mempersiapkan-dai-masa-depan-babf32f6fdc4?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Indah Maya</name>
+            <uri></uri>
+            <email></email>
+            <id>Indah Maya</id>
+        </author>
+        <category term="technology"/>
+    </entry>
+    <entry
+            xmlns="http://www.w3.org/2005/Atom" xmlns:geo="http://www.georss.org/georss"
+            xmlns:as="http://activitystrea.ms/spec/1.0/" xmlns:sf="http://superfeedr.com/xmpp-pubsub-ext">
+        <id>
+            https://medium.com/p/332f097aa0a9
+        </id>
+        <published>2025-05-02T05:40:25.000Z</published>
+        <updated>2025-05-02T05:40:25.627Z</updated>
+        <title>\u201cEtika dan
+            Hukum Digital dalam Penyebaran Dakwah Online\u201d Dakwah online, dengan jangkauannya yang\u2026
+        </title>
+        <summary
+                type="html">&lt;div class="medium-feed-item"&gt;&lt;p class="medium-feed-link"&gt;&lt;a
+            href="https://medium.com/@ii1581556/etika-dan-hukum-digital-dalam-penyebaran-dakwah-online-dakwah-online-dengan-jangkauannya-yang-332f097aa0a9?source=rss------technology-5"&gt;Continue
+            reading on Medium \u00bb&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+        </summary>
+        <link
+                title="\u201cEtika dan Hukum Digital dalam Penyebaran Dakwah Online\u201d Dakwah online, dengan jangkauannya yang\u2026"
+                rel="alternate"
+                href="https://medium.com/@ii1581556/etika-dan-hukum-digital-dalam-penyebaran-dakwah-online-dakwah-online-dengan-jangkauannya-yang-332f097aa0a9?source=rss------technology-5"
+                type="text/html"/>
+        <author>
+            <name>Indah Maya</name>
+            <uri></uri>
+            <email></email>
+            <id>Indah Maya</id>
+        </author>
+        <category term="technology"/>
+    </entry>
+</feed>

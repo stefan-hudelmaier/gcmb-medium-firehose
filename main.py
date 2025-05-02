@@ -1,11 +1,9 @@
-from fastapi import FastAPI, Request, Response, HTTPException, Header, status
+from fastapi import FastAPI, Request, Response, HTTPException, Header, status, Query
 from fastapi.responses import PlainTextResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 import hashlib
 import hmac
 import json
-from typing import Optional, Callable, Any
-import httpx
+from typing import Optional
 import secrets
 from pathlib import Path
 import os
@@ -15,8 +13,9 @@ from dotenv import load_dotenv
 import logging
 import time
 from datetime import datetime
-
-load_dotenv()
+from database import Database
+from http_client_logging import get_http_client, cleanup_http_client
+from fastapi_logging import RequestResponseLoggingMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -26,194 +25,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Get configuration from environment variables
 BASE_URL = os.getenv("WEBSUB_BASE_URL", "http://localhost:8080")
 HUB_URL = os.getenv("WEBSUB_HUB_URL", "http://medium.superfeedr.com")
 CALLBACK_PATH = "/webhook"
-
-class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Generate request ID
-        request_id = secrets.token_hex(8)
-        
-        # Log request
-        await self._log_request(request, request_id)
-        
-        # Get request start time
-        start_time = time.time()
-        
-        # Process the request and get response
-        response = await call_next(request)
-        
-        # Calculate request duration
-        duration = time.time() - start_time
-        
-        # Log response
-        await self._log_response(response, request_id, duration)
-        
-        return response
-    
-    async def _log_request(self, request: Request, request_id: str):
-        headers = dict(request.headers)
-        
-        try:
-            # Read request body
-            body = await request.body()
-            if body:
-                try:
-                    body_json = json.loads(body)
-                    body_text = json.dumps(body_json, indent=2)
-                except json.JSONDecodeError:
-                    body_text = body.decode()
-            else:
-                body_text = ""
-        except Exception:
-            body_text = "<binary data>"
-        
-        log_data = {
-            "timestamp": datetime.now().isoformat(),
-            "request_id": request_id,
-            "method": request.method,
-            "url": str(request.url),
-            "headers": headers,
-            "body": body_text
-        }
-        
-        logger.info(f"SERVER REQUEST [{request_id}]:\n{json.dumps(log_data, indent=2)}")
-    
-    async def _log_response(self, response: Response, request_id: str, duration: float):
-        headers = dict(response.headers)
-        
-        try:
-            # Get response body if it exists
-            if isinstance(response, Response):
-                body = response.body
-            else:
-                # For StreamingResponse and other types, we can't log the body
-                body = b""
-            
-            if body:
-                try:
-                    body_json = json.loads(body)
-                    body_text = json.dumps(body_json, indent=2)
-                except json.JSONDecodeError:
-                    body_text = body.decode()
-            else:
-                body_text = ""
-        except Exception:
-            body_text = "<binary data>"
-        
-        log_data = {
-            "timestamp": datetime.now().isoformat(),
-            "request_id": request_id,
-            "status_code": response.status_code,
-            "duration": f"{duration:.3f}s",
-            "headers": headers,
-            "body": body_text
-        }
-        
-        logger.info(f"SERVER RESPONSE [{request_id}]:\n{json.dumps(log_data, indent=2)}")
-
-class LoggingTransport(httpx.AsyncBaseTransport):
-    def __init__(self, transport: httpx.AsyncBaseTransport):
-        self._transport = transport
-
-    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        # Generate request ID
-        request_id = secrets.token_hex(8)
-        
-        # Log request
-        await self._log_request(request, request_id)
-        
-        # Get request start time
-        start_time = time.time()
-        
-        # Send request and get response
-        response = await self._transport.handle_async_request(request)
-        
-        # Calculate request duration
-        duration = time.time() - start_time
-        
-        # Log response
-        await self._log_response(response, request_id, duration)
-        
-        return response
-    
-    async def _log_request(self, request: httpx.Request, request_id: str):
-        headers = dict(request.headers)
-        
-        try:
-            # Create a copy of the request to read the body
-            body = request.content
-            if body:
-                try:
-                    body_json = json.loads(body)
-                    body_text = json.dumps(body_json, indent=2)
-                except json.JSONDecodeError:
-                    body_text = body.decode()
-            else:
-                body_text = ""
-        except Exception:
-            body_text = "<binary data>"
-        
-        log_data = {
-            "timestamp": datetime.now().isoformat(),
-            "request_id": request_id,
-            "method": request.method,
-            "url": str(request.url),
-            "headers": headers,
-            "body": body_text
-        }
-        
-        logger.info(f"CLIENT REQUEST [{request_id}]:\n{json.dumps(log_data, indent=2)}")
-    
-    async def _log_response(self, response: httpx.Response, request_id: str, duration: float):
-        headers = dict(response.headers)
-        
-        try:
-            # Read the response content without consuming the stream
-            body = await response.aread()
-            if body:
-                try:
-                    body_json = json.loads(body)
-                    body_text = json.dumps(body_json, indent=2)
-                except json.JSONDecodeError:
-                    body_text = body.decode()
-            else:
-                body_text = ""
-            
-            # Create a new response with the same content
-            response._content = body
-        except Exception:
-            body_text = "<binary data>"
-        
-        log_data = {
-            "timestamp": datetime.now().isoformat(),
-            "request_id": request_id,
-            "status_code": response.status_code,
-            "duration": f"{duration:.3f}s",
-            "headers": headers,
-            "body": body_text
-        }
-        
-        logger.info(f"CLIENT RESPONSE [{request_id}]:\n{json.dumps(log_data, indent=2)}")
-
-class LoggingClient(httpx.AsyncClient):
-    """Custom HTTP client that automatically uses logging transport"""
-    def __init__(self, **kwargs):
-        transport = httpx.AsyncHTTPTransport()
-        logging_transport = LoggingTransport(transport)
-        super().__init__(transport=logging_transport, **kwargs)
-
-# Create a single client instance for reuse
-http_client: Optional[LoggingClient] = None
-
-async def get_http_client() -> LoggingClient:
-    """Get or create a logging HTTP client instance"""
-    global http_client
-    if http_client is None:
-        http_client = LoggingClient()
-    return http_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -222,18 +40,15 @@ async def lifespan(app: FastAPI):
     await subscribe_to_topics()
     yield
     # Shutdown - cleanup HTTP client
-    global http_client
-    if http_client is not None:
-        await http_client.aclose()
-        http_client = None
+    await cleanup_http_client()
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestResponseLoggingMiddleware)
 
-
 # Store subscriptions and secrets in memory (in production, use a proper database)
 subscriptions = {}
 hub_secrets = {}  # Map of topic to secret
+db = Database()
 
 def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     """Verify the hub signature of the payload"""
@@ -248,16 +63,16 @@ def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     
     return hmac.compare_digest(signature, expected_signature)
 
-@app.get("/")
+@app.get("/webhook")
 async def root():
     return {"message": "WebSub Hub is running"}
 
 @app.get("/webhook")
 async def webhook_verification(
-    mode: str,
-    topic: str,
-    challenge: Optional[str] = None,
-    lease_seconds: Optional[int] = None
+    mode: str = Query(..., alias="hub.mode"),
+    topic: str = Query(..., alias="hub.topic"),
+    challenge: Optional[str] = Query(None, alias="hub.challenge"),
+    lease_seconds: Optional[int] = Query(None, alias="hub.lease_seconds")
 ):
     """Handle WebSub subscription verification"""
     if mode == "subscribe" or mode == "unsubscribe":
@@ -266,14 +81,24 @@ async def webhook_verification(
             return PlainTextResponse(content=challenge)
     raise HTTPException(status_code=400, detail="Invalid verification request")
 
+
+def extract_topic_from_link(link_header):
+    """
+    link header example: <https://example.com/feed>; rel="self"
+    """
+    return link_header.split(";")[0].strip("<>")
+
+
 @app.post("/webhook")
 async def webhook_handler(
     request: Request,
     x_hub_signature: Optional[str] = Header(None),
-    topic: str = Header(..., alias="X-Hub-Topic")
+    link_header: str = Header(..., alias="link")
 ):
     """Handle WebSub content distribution"""
     body = await request.body()
+    
+    topic = extract_topic_from_link(link_header)
     
     # Verify signature if a secret is set for this topic
     if topic in hub_secrets:
@@ -281,8 +106,14 @@ async def webhook_handler(
             raise HTTPException(status_code=403, detail="Invalid signature")
     
     try:
-        # Parse the content
-        content = json.loads(body)
+        feed = atoma.parse_atom_bytes(body)
+        for entry in feed.entries:
+            logger.info(f"Received entry: {entry.id_} {entry.title}")
+            # Store post ID in database
+            if db.add_post(entry.id_):
+                logger.info(f"New post added: {entry.id_}")
+            else:
+                logger.debug(f"Post already exists: {entry.id_}")
         
         # Distribute content to all subscribers for this topic
         if topic in subscriptions:
@@ -291,7 +122,7 @@ async def webhook_handler(
             for callback_url in subscriptions[topic]:
                 # Here you would make an HTTP POST request to each subscriber
                 # This is a placeholder for the actual distribution logic
-                print(f"Distributing to {callback_url}: {content}")
+                print(f"Distributing to {callback_url}: {feed}")
         
         return {"status": "success", "message": "Content distributed", "subscriber_count": len(subscriptions.get(topic, []))}
     except json.JSONDecodeError:
@@ -299,6 +130,9 @@ async def webhook_handler(
 
 
 async def subscribe_to_topics():
+
+    # wait a little so that server finishes startup
+    await asyncio.sleep(1)
     """Read topics from JSON file and send subscription requests to WebSub hub"""
     try:
         topics_file = Path("topics.json")
@@ -316,35 +150,37 @@ async def subscribe_to_topics():
         
         # Get the logging client
         client = await get_http_client()
-        
-        for topic_url in config["topics"]:
-            # Prepare subscription request parameters
-            params = {
-                "hub.mode": "subscribe",
-                "hub.topic": topic_url,
-                "hub.callback": callback_url,
-                "hub.verify": "async"
-            }
-            
-            try:
-                # Send subscription request to the hub
-                response = await client.post(HUB_URL, data=params)
-                if response.status_code in [200, 202]:
-                    print(f"Subscription request sent for {topic_url}")
-                    # Store subscription intent (actual subscription will be confirmed via webhook)
-                    if topic_url not in subscriptions:
-                        subscriptions[topic_url] = set()
-                    subscriptions[topic_url].add(callback_url)
-                else:
-                    print(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
-                    print(f"Hub response: {response.text}")
-            except Exception as e:
-                print(f"Error subscribing to {topic_url}: {str(e)}")
+
+        for hub in config["hubs"]:
+            hub_url = hub['url']
+            for topic_url in hub["topics"]:
+                # Prepare subscription request parameters
+                params = {
+                    "hub.mode": "subscribe",
+                    "hub.topic": topic_url,
+                    "hub.callback": callback_url,
+                    "hub.verify": "async"
+                }
+
+                try:
+                    # Send subscription request to the hub
+                    response = await client.post(hub_url, data=params)
+                    if response.status_code in [200, 202, 204]:
+                        print(f"Subscription request sent for {topic_url}")
+                        # Store subscription intent (actual subscription will be confirmed via webhook)
+                        if topic_url not in subscriptions:
+                            subscriptions[topic_url] = set()
+                        subscriptions[topic_url].add(callback_url)
+                    else:
+                        print(f"Failed to subscribe to {topic_url}: Hub returned {response.status_code}")
+                        print(f"Hub response: {response.text}")
+                except Exception as e:
+                    print(f"Error subscribing to {topic_url}: {str(e)}")
     
     except json.JSONDecodeError:
         print("Error: Invalid JSON in topics.json")
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    #except Exception as e:
+    #    print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
