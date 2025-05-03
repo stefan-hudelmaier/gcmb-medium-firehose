@@ -9,7 +9,7 @@ WORKDIR /app
 COPY uv.lock pyproject.toml /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --frozen --no-install-project --no-dev
-COPY *.py /app/
+COPY *.py topics.json /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --frozen --no-dev
  
