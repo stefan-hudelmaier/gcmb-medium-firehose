@@ -22,8 +22,11 @@ class MqttPublisher:
     def __init__(self):
 
         self.mqtt_client = self._connect_mqtt()
+        self.msg_queue = queue.Queue(maxsize=100000)
+        self.start_time = time.time()
+        self.last_successful_message = None
 
-        mqtt_publish_locations_thread = Thread(target=self._publish_msg_queue_messages, args=(self.mqtt_client,))
+        mqtt_publish_locations_thread = Thread(target=self._publish_msg_queue_messages, args=())
         mqtt_publish_locations_thread.start()
 
         #watchdog_thread = Thread(target=self._watchdog, args=())
@@ -32,9 +35,6 @@ class MqttPublisher:
         mqtt_client_thread = Thread(target=self._mqtt_client_thread, args=())
         mqtt_client_thread.start()
 
-        self.msg_queue = queue.Queue(maxsize=100000)
-        self.start_time = time.time()
-        self.last_successful_message = None
 
     def _mqtt_client_thread(self):
         self.mqtt_client.loop_forever()
@@ -79,8 +79,7 @@ class MqttPublisher:
                     self.last_successful_message = time.time()
 
             except Exception as e:
-                logger.error(f"Caught exception")
-                logger.error(e)
+                logger.error(f"Exception publishing message", exc_info=True)
 
 
     def send_msg(self, msg, topic):
