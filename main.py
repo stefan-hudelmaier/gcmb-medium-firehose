@@ -22,6 +22,7 @@ from fastapi.responses import PlainTextResponse
 from database import Database
 from fastapi_logging import RequestResponseLoggingMiddleware
 from http_client_logging import get_http_client, cleanup_http_client
+from mqtt_publish import MqttPublisher
 
 # Configure logging
 logging.basicConfig(
@@ -42,6 +43,7 @@ CALLBACK_PATH = "/websub/webhook"
 subscriptions = {}
 hub_secrets = {}  # Map of topic to secret
 db = Database()
+mqtt_publish = MqttPublisher()
 
 def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     """Verify the hub signature of the payload"""
@@ -278,6 +280,10 @@ async def webhook_handler(
                 # Store post ID in database
                 if db.add_post(entry.id_):
                     logger.info(f"New post added: {entry.id_}")
+                    # Publish to MQTT
+                    mqtt_topic = topic.replace("https://", "").replace("/", "_")
+                    mqtt_topic = f"medium/medium-firehose/feeds/{mqtt_topic}"
+                    mqtt_publish.send_msg(body, mqtt_topic)
                 else:
                     logger.info(f"Post already exists: {entry.id_}")
         
