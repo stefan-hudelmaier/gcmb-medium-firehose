@@ -280,10 +280,14 @@ async def webhook_handler(
                 # Store post ID in database
                 if db.add_post(entry.id_):
                     logger.info(f"New post added: {entry.id_}")
+                    entry_xml = ET.ElementTree(entry.to_xml())
                     # Publish to MQTT
+                    base_mqtt_topic = "medium/medium-firehose"
                     mqtt_topic = topic.replace("https://", "").replace("/", "_").replace("\\", "").strip()
-                    mqtt_topic = f"medium/medium-firehose/feeds/{mqtt_topic}"
+                    mqtt_topic = f"{base_mqtt_topic}/feeds/{mqtt_topic}"
                     mqtt_publish.send_msg(body, mqtt_topic)
+                    for tag in entry.categories:
+                        mqtt_publish.send_msg(entry, f"{base_mqtt_topic}/tags/{tag}")
                 else:
                     logger.info(f"Post already exists: {entry.id_}")
         
