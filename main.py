@@ -284,10 +284,10 @@ async def webhook_handler(
                     entry_xml = serialize_atom_entry(entry)
                     # Publish to MQTT
                     base_mqtt_topic = "medium/medium-firehose"
-                    mqtt_feed_topic_part = topic.replace("https://", "").replace("/", "_").replace("\\", "").strip()
-                    mqtt_topic = f"{base_mqtt_topic}/feeds/{mqtt_feed_topic_part}"
+                    mqtt_topic = f"{base_mqtt_topic}/all"
                     mqtt_publish.send_msg(entry_xml, mqtt_topic)
-                    for tag in entry.categories:
+                    for category in entry.categories:
+                        tag = category.term.replace(" ", "_").replace("/", "_").strip()
                         mqtt_publish.send_msg(entry_xml, f"{base_mqtt_topic}/tags/{tag}")
                 else:
                     logger.info(f"Post already exists: {entry.id_}")
