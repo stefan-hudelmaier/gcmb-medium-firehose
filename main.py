@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException, Header, Query
 from fastapi.responses import PlainTextResponse
 
+from atom_entry_serializer import serialize_atom_entry
 from database import Database
 from fastapi_logging import RequestResponseLoggingMiddleware
 from http_client_logging import get_http_client, cleanup_http_client
@@ -280,14 +281,14 @@ async def webhook_handler(
                 # Store post ID in database
                 if db.add_post(entry.id_):
                     logger.info(f"New post added: {entry.id_}")
-                    entry_xml = ET.ElementTree(entry.to_xml())
+                    entry_xml = serialize_atom_entry(entry)
                     # Publish to MQTT
                     base_mqtt_topic = "medium/medium-firehose"
-                    mqtt_topic = topic.replace("https://", "").replace("/", "_").replace("\\", "").strip()
-                    mqtt_topic = f"{base_mqtt_topic}/feeds/{mqtt_topic}"
-                    mqtt_publish.send_msg(body, mqtt_topic)
+                    mqtt_feed_topic_part = topic.replace("https://", "").replace("/", "_").replace("\\", "").strip()
+                    mqtt_topic = f"{base_mqtt_topic}/feeds/{mqtt_feed_topic_part}"
+                    mqtt_publish.send_msg(entry_xml, mqtt_topic)
                     for tag in entry.categories:
-                        mqtt_publish.send_msg(entry, f"{base_mqtt_topic}/tags/{tag}")
+                        mqtt_publish.send_msg(entry_xml, f"{base_mqtt_topic}/tags/{tag}")
                 else:
                     logger.info(f"Post already exists: {entry.id_}")
         

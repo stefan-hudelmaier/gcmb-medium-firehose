@@ -85,7 +85,7 @@ class AtomEntry:
         return xml_str
 
 
-def serialize_atom_entry(entry) -> AtomEntry:
+def _to_atom_entry(entry) -> AtomEntry:
     """
     Serializes an Atom entry parsed by atoma into our internal representation.
     
@@ -127,3 +127,7 @@ def serialize_atom_entry(entry) -> AtomEntry:
         author=author,
         categories=categories
     )
+
+def serialize_atom_entry(atoma_entry) -> str:
+    atom_entry = _to_atom_entry(atoma_entry)
+    return atom_entry.to_xml_string()

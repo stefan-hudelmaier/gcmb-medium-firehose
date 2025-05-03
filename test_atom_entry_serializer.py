@@ -2,7 +2,7 @@
 import unittest
 from datetime import datetime, timezone
 from atoma import parse_atom_bytes
-from atom_entry_serializer import serialize_atom_entry, AtomEntry, Author
+from atom_entry_serializer import _to_atom_entry, AtomEntry, Author, serialize_atom_entry
 import xml.etree.ElementTree as ET
 
 
@@ -90,9 +90,9 @@ class TestAtomEntrySerializer(unittest.TestCase):
         feed = parse_atom_bytes(feed_xml.encode('utf-8'))
         self.sample_entry = feed.entries[0]
 
-    def test_serialize_atom_entry(self):
+    def test_to_atom_entry(self):
         """Test that an Atom entry is correctly serialized."""
-        result = serialize_atom_entry(self.sample_entry)
+        result = _to_atom_entry(self.sample_entry)
 
         self.assertIsInstance(result, AtomEntry)
         
@@ -129,7 +129,7 @@ class TestAtomEntrySerializer(unittest.TestCase):
 
     def test_atom_entry_to_xml(self):
         """Test that an AtomEntry can be converted to XML."""
-        atom_entry = serialize_atom_entry(self.sample_entry)
+        atom_entry = _to_atom_entry(self.sample_entry)
         xml_elem = atom_entry.to_xml()
         
         # Test XML structure
@@ -173,9 +173,8 @@ class TestAtomEntrySerializer(unittest.TestCase):
 
     def test_atom_entry_to_xml_string(self):
         """Test that an AtomEntry can be converted to an XML string."""
-        atom_entry = serialize_atom_entry(self.sample_entry)
-        xml_str = atom_entry.to_xml_string()
-        
+        xml_str = serialize_atom_entry(self.sample_entry)
+
         # Basic validation that it's a well-formed XML string
         try:
             ET.fromstring(xml_str)
