@@ -59,7 +59,7 @@ class MqttPublisher:
 
 
     def _publish(self, topic, msg):
-        result = self.mqtt_client.publish(topic, msg, retain=True)
+        result = self.mqtt_client.publish(topic, msg, retain=False)
         status = result.rc
         if status == 0:
             logger.debug(f"Sent '{msg}' to topic {topic} with id {result.mid}. is_published: {result.is_published()}")

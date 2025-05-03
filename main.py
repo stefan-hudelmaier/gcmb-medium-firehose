@@ -281,7 +281,7 @@ async def webhook_handler(
                 if db.add_post(entry.id_):
                     logger.info(f"New post added: {entry.id_}")
                     # Publish to MQTT
-                    mqtt_topic = topic.replace("https://", "").replace("/", "_")
+                    mqtt_topic = topic.replace("https://", "").replace("/", "_").replace("\\", "").strip()
                     mqtt_topic = f"medium/medium-firehose/feeds/{mqtt_topic}"
                     mqtt_publish.send_msg(body, mqtt_topic)
                 else:
