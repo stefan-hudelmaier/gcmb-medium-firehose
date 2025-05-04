@@ -22,13 +22,23 @@ Here is an example MQTT message:
   <category term="growth"/>
   <category term="business"/>
   <category term="economy"/>
-  <link title="Can “AI” Destroy Global Business Ecosystems? Why Isn’t Anyone Talking About It?" rel="alternate" href="https://bhadana-manoj.medium.com/can-ai-destroy-global-business-ecosystems-why-isnt-anyone-talking-about-it-66fc
-2e59f977?source=rss------business-5" type="text/html"/>
-  <summary type="html">&lt;div class=&quot;medium-feed-item&quot;&gt;&lt;p class=&quot;medium-feed-image&quot;&gt;&lt;a href=&quot;https://bhadana-manoj.medium.com/can-ai-destroy-global-business-ecosystems-why-isnt-anyone-talking-
-about-it-66fc2e59f977?source=rss------business-5&quot;&gt;&lt;img src=&quot;https://cdn-images-1.medium.com/max/1200/1*S4H_5B5CqNvWtW07IfdFMA.jpeg&quot; width=&quot;1200&quot;&gt;&lt;/a&gt;&lt;/p&gt;&lt;p class=&quot;medium-feed-s
-nippet&quot;&gt;AI&amp;#x2019;s rapid rise threatens not just jobs but entire business ecosystems. As companies like Duolingo and Canva embrace automation, AI giants&amp;#x2026;&lt;/p&gt;&lt;p class=&quot;medium-feed-link&quot;&gt
-;&lt;a href=&quot;https://bhadana-manoj.medium.com/can-ai-destroy-global-business-ecosystems-why-isnt-anyone-talking-about-it-66fc2e59f977?source=rss------business-5&quot;&gt;Continue reading on Medium »&lt;/a&gt;&lt;/p&gt;&lt;/di
-v&gt;</summary>
+  <link title="Can “AI” Destroy Global Business Ecosystems? Why Isn’t Anyone Talking About 
+    It?" rel="alternate" href="https://bhadana-manoj.medium.com/can-ai-destroy-global-business-
+    ecosystems-why-isnt-anyone-talking-about-it-66fc2e59f977?source=rss------business-5" 
+    type="text/html"/>
+  <summary type="html">&lt;div class=&quot;medium-feed-item&quot;&gt;&lt;p class=&quot;
+    medium-feed-image&quot;&gt;&lt;a href=&quot;https://bhadana-manoj.medium.com/can-ai-
+    destroy-global-business-ecosystems-why-isnt-anyone-talking-about-it-66fc2e59f977
+    ?source=rss------business-5&quot;&gt;&lt;img src=&quot;https://cdn-images-1.medium.com
+    /max/1200/1*S4H_5B5CqNvWtW07IfdFMA.jpeg&quot; width=&quot;1200&quot;&gt;&lt;/a&gt;&lt;
+    /p&gt;&lt;p class=&quot;medium-feed-snippet&quot;&gt;AI&amp;#x2019;s rapid rise
+    threatens not just jobs but entire business ecosystems. As companies like Duolingo
+    and Canva embrace automation, AI giants&amp;#x2026;&lt;/p&gt;&lt;p class=&quot;
+    medium-feed-link&quot;&gt;&lt;a href=&quot;https://bhadana-manoj.medium.com/can-
+    ai-destroy-global-business-ecosystems-why-isnt-anyone-talking-about-it-66fc2e59f977
+    ?source=rss------business-5&quot;&gt;Continue reading on Medium »&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+  </summary>
 </entry>
 ```
 
@@ -145,4 +155,4 @@ sends push messages via a standing TCP connection.
 * investing
 * ux-design
 
-Source: https://medium.oldcai.com/
+Source: [https://medium.oldcai.com/](https://medium.oldcai.com/)
