@@ -1,0 +1,1 @@
+* The build system is uv. Add new packages using uv add.
