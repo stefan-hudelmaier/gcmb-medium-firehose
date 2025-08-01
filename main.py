@@ -40,23 +40,22 @@ load_dotenv()
 BASE_URL = os.getenv("WEBSUB_BASE_URL", "http://localhost:8080")
 CALLBACK_PATH = "/websub/webhook"
 
-# Store subscriptions and secrets in memory (in production, use a proper database)
 subscriptions = {}
 hub_secrets = {}  # Map of topic to secret
 db = Database()
-mqtt_publish = MqttPublisher()
+mqtt_publish = MqttPublisher(target_rate=1, min_buffer_size=5, max_buffer_size=20)
 
 def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     """Verify the hub signature of the payload"""
     if not signature or not signature.startswith("sha1="):
         return False
-    
+
     expected_signature = "sha1=" + hmac.new(
         secret.encode('utf-8'),
         body,
         hashlib.sha1
     ).hexdigest()
-    
+
     return hmac.compare_digest(signature, expected_signature)
 
 
@@ -66,22 +65,22 @@ async def lifespan(app: FastAPI):
     # Startup
     post_count = db.count_posts()
     logger.info(f"Starting server with {post_count} previously seen posts in database")
-    
+
     # Start subscription expiry checker
     expiry_checker = asyncio.create_task(check_expiring_subscriptions())
-    
+
     # Subscribe to topics asynchronously so that the server can finish starting and is available
     asyncio.create_task(subscribe_to_topics())
-    
+
     yield
-    
+
     # Shutdown
     expiry_checker.cancel()
     try:
         await expiry_checker
     except asyncio.CancelledError:
         pass
-    
+
     await cleanup_http_client()
 
 
@@ -98,7 +97,7 @@ async def webhook_verification(
 ):
     """Handle WebSub subscription verification"""
     logger.info(f"Received verification request: mode={mode}, topic={topic}")
-    
+
     if mode == "subscribe":
         if topic not in subscriptions:
             logger.warning(f"Received verification for unknown subscription: {topic}")
@@ -115,16 +114,16 @@ async def webhook_verification(
         if hub_url:
             db.add_subscription(topic, hub_url, lease_seconds)
             logger.info(f"Stored subscription lease for {topic}, expires in {lease_seconds} seconds")
-        
+
         # Return the challenge code to confirm subscription
         if challenge:
             return PlainTextResponse(content=challenge)
-    
+
     elif mode == "unsubscribe":
         # Handle unsubscribe verification if needed
         if challenge:
             return PlainTextResponse(content=challenge)
-    
+
     raise HTTPException(status_code=400, detail="Invalid verification request")
 
 
@@ -136,20 +135,20 @@ async def check_expiring_subscriptions():
             expiring = db.get_expiring_subscriptions(within_minutes=5)
             if expiring:
                 logger.info(f"Found {len(expiring)} subscription(s) expiring soon")
-                
+
                 # Get HTTP client
                 client = await get_http_client()
-                
+
                 # Try to renew each subscription
                 for sub in expiring:
                     logger.info(f"Renewing subscription for {sub.topic_url} (expires {sub.lease_expires})")
                     await subscribe_to_topic(client, sub.hub_url, sub.topic_url)
-        
+
         except Exception as e:
             logger.error(f"Error checking expiring subscriptions: {str(e)}")
             if logger.isEnabledFor(logging.DEBUG):
                 traceback.print_exc()
-        
+
         # Check every minute
         await asyncio.sleep(60)
 
@@ -165,7 +164,7 @@ async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url:
         "hub.callback": urljoin(BASE_URL, CALLBACK_PATH),
         "hub.verify": "async"
     }
-    
+
     for attempt in range(max_retries):
         try:
             response = await client.post(hub_url, data=params)
@@ -186,7 +185,7 @@ async def subscribe_to_topic(client: httpx.AsyncClient, hub_url: str, topic_url:
             if logger.isEnabledFor(logging.DEBUG):
                 traceback.print_exc()
             return False
-    
+
     logger.error(f"Failed to subscribe to {topic_url} after {max_retries} attempts")
     return False
 
@@ -194,23 +193,23 @@ async def subscribe_to_topics():
     """Read topics from JSON file and send subscription requests to WebSub hub"""
     # wait a little so that server finishes startup
     await asyncio.sleep(1)
-    
+
     try:
         topics_file = Path("topics.json")
         if not topics_file.exists():
             logger.error("topics.json not found")
             return
-        
+
         with open(topics_file) as f:
             config = json.load(f)
-        
+
         # Generate callback URL from base URL
         callback_url = urljoin(BASE_URL, CALLBACK_PATH)
         logger.info(f"Using callback URL: {callback_url}")
-        
+
         # Get the logging client
         client = await get_http_client()
-        
+
         for hub in config["hubs"]:
             hub_url = hub['url']
             for topic_url in hub["topics"]:
@@ -222,14 +221,14 @@ async def subscribe_to_topics():
                         continue
                     else:
                         logger.info(f"Subscription expired for {topic_url}, renewing")
-                
+
                 # Subscribe to topic
                 if await subscribe_to_topic(client, hub_url, topic_url):
                     # Store subscription intent (actual subscription will be confirmed via webhook)
                     if topic_url not in subscriptions:
                         subscriptions[topic_url] = set()
                     subscriptions[topic_url].add(callback_url)
-    
+
     except json.JSONDecodeError:
         logger.error("Error: Invalid JSON in topics.json")
     except Exception as e:
@@ -246,25 +245,25 @@ async def webhook_handler(
 ):
     """Handle WebSub content distribution"""
     body = await request.body()
-    
+
     topic = extract_topic_from_link(link_header)
-    
+
     # Verify signature if a secret is set for this topic
     if topic in hub_secrets:
         if not verify_signature(body, x_hub_signature, hub_secrets[topic]):
             raise HTTPException(status_code=403, detail="Invalid signature")
-    
+
     try:
         # First check if this is a status message using ElementTree
         try:
             tree = ET.parse(BytesIO(body))
             root = tree.getroot()
-            
+
             # Remove namespace from tag names for easier checking
             # This handles cases where the feed might use namespaces like {http://www.w3.org/2005/Atom}feed
             ns = root.tag.split('}')[0] + '}' if '}' in root.tag else ''
             root_tag = root.tag.split('}')[-1]
-            
+
             if root_tag == 'feed':
                 # Check for an empty id element, this indicates a status message without entries
                 for child in root:
@@ -273,7 +272,7 @@ async def webhook_handler(
                         if child.text is None or child.text.strip() == "":
                             logger.info(f"Received status message for topic {topic}: {child.text}")
                             return {"status": "success", "message": "Status message received"}
-            
+
             # If we get here, it's not a status message, parse with atoma
             feed = atoma.parse_atom_bytes(body)
             for entry in feed.entries:
@@ -291,13 +290,13 @@ async def webhook_handler(
                         mqtt_publish.send_msg(entry_xml, f"{base_mqtt_topic}/tags/{tag}")
                 else:
                     logger.info(f"Post already exists: {entry.id_}")
-        
+
             return {"status": "success", "message": "Content distributed"}
-            
+
         except ET.ParseError:
             logger.error("Failed to parse XML")
             raise HTTPException(status_code=400, detail="Invalid XML")
-            
+
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
         raise HTTPException(status_code=400, detail="Error processing webhook")
