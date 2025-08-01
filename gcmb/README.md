@@ -5,7 +5,7 @@ are published via MQTT in the form of [Atom](https://en.wikipedia.org/wiki/Atom_
 
 The most popular 100 tags are monitored, see below for a full list.
 
-Here is a web app that subscribes to the stream and displays new posts: https://stefan-hudelmaier.github.io/medium-firehose-ui/
+Here is a web app that subscribes to the stream and displays new posts: [Medium Firehose UI](https://stefan-hudelmaier.github.io/medium-firehose-ui/)
 
 Here is an example MQTT message:
 
