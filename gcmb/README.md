@@ -1,4 +1,4 @@
-# Medium.com Post Firehose
+# Medium.com Firehose
 
 This is a real-time stream of medium.com blog posts. Information about new blog posts
 are published via MQTT in the form of [Atom](https://en.wikipedia.org/wiki/Atom_(web_standard)) entries.
